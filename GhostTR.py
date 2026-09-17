@@ -208,13 +208,16 @@ def my_ip():
     print(f"\n {Wh}==============================================")
 
 
-# OPTIONS
+def clean_exit():
+    print(f"\n {Wh}[{Gr}+{Wh}] Thanks for using TrackVault. Goodbye!")
+    exit()
+    # OPTIONS
 options = [
     {'num': 1, 'text': 'IP Tracker', 'func': track_ip},
     {'num': 2, 'text': 'Show Your IP', 'func': my_ip},
     {'num': 3, 'text': 'Phone Number Tracker', 'func': lookup_phone},
     {'num': 4, 'text': 'Username Tracker', 'func': find_username},
-    {'num': 0, 'text': 'Exit', 'func': exit}
+    {'num': 0, 'text': 'Exit', 'func': clean_exit}
 ]
 
 
