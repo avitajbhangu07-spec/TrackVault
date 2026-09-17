@@ -1,12 +1,12 @@
-# GhostTrack
-Useful tool to track location or mobile number, so this tool can be called osint or also information gathering
+# TrackVault
+A handy OSINT tool to track location or mobile number, so this tool can be used for information gathering.
 
-<img src="https://github.com/HunxByts/GhostTrack/blob/main/asset/bn.png"/>
+<img src="asset/bn.png"/>
 
-New update :
+New update:
 ```Version 2.2```
 
-### Instalation on Linux (deb)
+### Installation on Linux (deb)
 ```
 sudo apt-get install git
 sudo apt-get install python3
@@ -20,34 +20,31 @@ pkg install python3
 
 ### Usage Tool
 ```
-git clone https://github.com/HunxByts/GhostTrack.git
-cd GhostTrack
+git clone https://github.com/avitajbhangu07-spec/TrackVault.git
+cd TrackVault
 pip3 install -r requirements.txt
 python3 GhostTR.py
 ```
 
-Display on the menu ```IP Tracker```
+Display on the menu IP Tracker
 
-<img src="https://github.com/HunxByts/GhostTrack/blob/main/asset/ip.png " />
+<img src="asset/ip.png" />
 
-on the IP Track menu, you can combo with the seeker tool to get the target IP
-<details>
-<summary>:zap: Install Seeker :</summary>
-- <strong><a href="https://github.com/thewhiteh4t/seeker">Get Seeker</a></strong>
-</details>
+Display on the menu Phone Tracker
 
-Display on the menu ```Phone Tracker```
-
-<img src="https://github.com/HunxByts/GhostTrack/blob/main/asset/phone.png" />
+<img src="asset/phone.png" />
 
 on this menu you can search for information from the target phone number
 
-Display on the menu ```Username Tracker```
+Display on the menu Username Tracker
 
-<img src="https://github.com/HunxByts/GhostTrack/blob/main/asset/User.png"/>
+<img src="asset/User.png"/>
+
 on this menu you can search for information from the target username on social media
 
-<details>
-<summary>:zap: Author :</summary>
-- <strong><a href="https://github.com/HunxByts">HunxByts</a></strong>
-</details>
+Features
+IP address lookup with geolocation, ISP, ASN info
+Phone number lookup (carrier, region, validity)
+Username search across 20+ social platforms
+Save any lookup result to a timestamped JSON file
+

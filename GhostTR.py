@@ -1,20 +1,17 @@
 #!/usr/bin/python
-# << CODE BY HUNX04
-# << MAU RECODE ??? IZIN DULU LAH,  MINIMAL TAG AKUN GITHUB MIMIN YANG MENGARAH KE AKUN INI, LEBIH GAMPANG SI PAKE FORK
-# << KALAU DI ATAS TIDAK DI IKUTI MAKA AKAN MENDAPATKAN DOSA KARENA MIMIN GAK IKHLAS
-# “Wahai orang-orang yang beriman! Janganlah kamu saling memakan harta sesamamu dengan jalan yang batil,” (QS. An Nisaa': 29). Rasulullah SAW juga melarang umatnya untuk mengambil hak orang lain tanpa izin.
-
-# IMPORT MODULE
+# TrackVault - OSINT lookup toolkit
+# Built on top of the original GhostTrack project, extended with save-to-file support and renamed internals.
 
 import json
 import requests
 import time
 import os
+from datetime import datetime
 import phonenumbers
 from phonenumbers import carrier, geocoder, timezone
 from sys import stderr
 
-Bl = '\033[30m'  # VARIABLE BUAT WARNA CUYY
+Bl = '\033[30m'
 Re = '\033[1;31m'
 Gr = '\033[1;32m'
 Ye = '\033[1;33m'
@@ -23,27 +20,44 @@ Mage = '\033[1;35m'
 Cy = '\033[1;36m'
 Wh = '\033[1;37m'
 
+RESULTS_DIR = "results"
 
-# utilities
 
 # decorator for attaching run_banner to a function
 def is_option(func):
     def wrapper(*args, **kwargs):
         run_banner()
         func(*args, **kwargs)
-
-
     return wrapper
+
+
+def save_results(data: dict, label: str):
+    """Ask the user if they want to save lookup results, and write to a timestamped file."""
+    choice = input(f"\n {Wh}Save results to file? {Gr}(y/n): {Wh}").strip().lower()
+    if choice != 'y':
+        return
+    if not os.path.exists(RESULTS_DIR):
+        os.makedirs(RESULTS_DIR)
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"{RESULTS_DIR}/{label}_{timestamp}.json"
+    with open(filename, "w") as f:
+        json.dump(data, f, indent=4, default=str)
+    print(f" {Wh}[{Gr}+{Wh}] Saved to {Gr}{filename}")
 
 
 # FUNCTIONS FOR MENU
 @is_option
-def IP_Track():
-    ip = input(f"{Wh}\n Enter IP target : {Gr}")  # INPUT IP ADDRESS
+def track_ip():
+    ip = input(f"{Wh}\n Enter IP target : {Gr}")
     print()
     print(f' {Wh}============= {Gr}SHOW INFORMATION IP ADDRESS {Wh}=============')
-    req_api = requests.get(f"http://ipwho.is/{ip}")  # API IPWHOIS.IS
+    req_api = requests.get(f"http://ipwho.is/{ip}")
     ip_data = json.loads(req_api.text)
+
+    if not ip_data.get("success", True):
+        print(f" {Re}Invalid IP or lookup failed: {ip_data.get('message', 'unknown error')}")
+        return
+
     time.sleep(2)
     print(f"{Wh}\n IP target       :{Gr}", ip)
     print(f"{Wh} Type IP         :{Gr}", ip_data["type"])
@@ -74,24 +88,26 @@ def IP_Track():
     print(f"{Wh} DST             :{Gr}", ip_data["timezone"]["is_dst"])
     print(f"{Wh} Offset          :{Gr}", ip_data["timezone"]["offset"])
     print(f"{Wh} UTC             :{Gr}", ip_data["timezone"]["utc"])
-    print(f"{Wh} Current Time    :{Gr}", ip_data["timezone"]["current_time"])
+    print(f"{Wh} Current Time    :{Gr}", ip_data["timezone"].get("current_time", "N/A"))
+
+    save_results(ip_data, f"ip_{ip}")
 
 
 @is_option
-def phoneGW():
-    User_phone = input(
-        f"\n {Wh}Enter phone number target {Gr}Ex [+6281xxxxxxxxx] {Wh}: {Gr}")  # INPUT NUMBER PHONE
-    default_region = "ID"  # DEFAULT NEGARA INDONESIA
+def lookup_phone():
+    user_phone = input(
+        f"\n {Wh}Enter phone number target {Gr}Ex [+6281xxxxxxxxx] {Wh}: {Gr}")
+    default_region = "ID"
 
-    parsed_number = phonenumbers.parse(User_phone, default_region)  # VARIABLE PHONENUMBERS
+    parsed_number = phonenumbers.parse(user_phone, default_region)
     region_code = phonenumbers.region_code_for_number(parsed_number)
-    jenis_provider = carrier.name_for_number(parsed_number, "en")
+    provider_name = carrier.name_for_number(parsed_number, "en")
     location = geocoder.description_for_number(parsed_number, "id")
     is_valid_number = phonenumbers.is_valid_number(parsed_number)
     is_possible_number = phonenumbers.is_possible_number(parsed_number)
     formatted_number = phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.INTERNATIONAL)
-    formatted_number_for_mobile = phonenumbers.format_number_for_mobile_dialing(parsed_number, default_region,
-                                                                                with_formatting=True)
+    formatted_number_for_mobile = phonenumbers.format_number_for_mobile_dialing(
+        parsed_number, default_region, with_formatting=True)
     number_type = phonenumbers.number_type(parsed_number)
     timezone1 = timezone.time_zones_for_number(parsed_number)
     timezoneF = ', '.join(timezone1)
@@ -100,7 +116,7 @@ def phoneGW():
     print(f"\n {Wh}Location             :{Gr} {location}")
     print(f" {Wh}Region Code          :{Gr} {region_code}")
     print(f" {Wh}Timezone             :{Gr} {timezoneF}")
-    print(f" {Wh}Operator             :{Gr} {jenis_provider}")
+    print(f" {Wh}Operator             :{Gr} {provider_name}")
     print(f" {Wh}Valid number         :{Gr} {is_valid_number}")
     print(f" {Wh}Possible number      :{Gr} {is_possible_number}")
     print(f" {Wh}International format :{Gr} {formatted_number}")
@@ -110,16 +126,31 @@ def phoneGW():
         f" {Wh}E.164 format         :{Gr} {phonenumbers.format_number(parsed_number, phonenumbers.PhoneNumberFormat.E164)}")
     print(f" {Wh}Country code         :{Gr} {parsed_number.country_code}")
     print(f" {Wh}Local number         :{Gr} {parsed_number.national_number}")
+
+    type_label = "Unknown"
     if number_type == phonenumbers.PhoneNumberType.MOBILE:
-        print(f" {Wh}Type                 :{Gr} This is a mobile number")
+        type_label = "This is a mobile number"
     elif number_type == phonenumbers.PhoneNumberType.FIXED_LINE:
-        print(f" {Wh}Type                 :{Gr} This is a fixed-line number")
+        type_label = "This is a fixed-line number"
     else:
-        print(f" {Wh}Type                 :{Gr} This is another type of number")
+        type_label = "This is another type of number"
+    print(f" {Wh}Type                 :{Gr} {type_label}")
+
+    result_data = {
+        "location": location,
+        "region_code": region_code,
+        "timezone": timezoneF,
+        "operator": provider_name,
+        "valid": is_valid_number,
+        "possible": is_possible_number,
+        "international_format": formatted_number,
+        "type": type_label
+    }
+    save_results(result_data, f"phone_{user_phone.replace('+', '')}")
 
 
 @is_option
-def TrackLu():
+def find_username():
     try:
         username = input(f"\n {Wh}Enter Username : {Gr}")
         results = {}
@@ -145,7 +176,6 @@ def TrackLu():
             {"url": "https://www.stumbleupon.com/stumbler/{}", "name": "StumbleUpon"},
             {"url": "https://www.ello.co/{}", "name": "Ello"},
             {"url": "https://www.producthunt.com/@{}", "name": "Product Hunt"},
-            {"url": "https://www.snapchat.com/add/{}", "name": "Snapchat"},
             {"url": "https://www.telegram.me/{}", "name": "Telegram"},
             {"url": "https://www.weheartit.com/{}", "name": "We Heart It"}
         ]
@@ -155,7 +185,7 @@ def TrackLu():
             if response.status_code == 200:
                 results[site['name']] = url
             else:
-                results[site['name']] = (f"{Ye}Username not found {Ye}!")
+                results[site['name']] = "Username not found!"
     except Exception as e:
         print(f"{Re}Error : {e}")
         return
@@ -165,53 +195,32 @@ def TrackLu():
     for site, url in results.items():
         print(f" {Wh}[ {Gr}+ {Wh}] {site} : {Gr}{url}")
 
+    save_results(results, f"username_{username}")
+
 
 @is_option
-def showIP():
-    respone = requests.get('https://api.ipify.org/')
-    Show_IP = respone.text
+def my_ip():
+    response = requests.get('https://api.ipify.org/')
+    show_ip = response.text
 
     print(f"\n {Wh}========== {Gr}SHOW INFORMATION YOUR IP {Wh}==========")
-    print(f"\n {Wh}[{Gr} + {Wh}] Your IP Adrress : {Gr}{Show_IP}")
+    print(f"\n {Wh}[{Gr} + {Wh}] Your IP Address : {Gr}{show_ip}")
     print(f"\n {Wh}==============================================")
 
 
 # OPTIONS
 options = [
-    {
-        'num': 1,
-        'text': 'IP Tracker',
-        'func': IP_Track
-    },
-    {
-        'num': 2,
-        'text': 'Show Your IP',
-        'func': showIP
-
-    },
-    {
-        'num': 3,
-        'text': 'Phone Number Tracker',
-        'func': phoneGW
-    },
-    {
-        'num': 4,
-        'text': 'Username Tracker',
-        'func': TrackLu
-    },
-    {
-        'num': 0,
-        'text': 'Exit',
-        'func': exit
-    }
+    {'num': 1, 'text': 'IP Tracker', 'func': track_ip},
+    {'num': 2, 'text': 'Show Your IP', 'func': my_ip},
+    {'num': 3, 'text': 'Phone Number Tracker', 'func': lookup_phone},
+    {'num': 4, 'text': 'Username Tracker', 'func': find_username},
+    {'num': 0, 'text': 'Exit', 'func': exit}
 ]
 
 
 def clear():
-    # for windows
     if os.name == 'nt':
         _ = os.system('cls')
-    # for mac and linux
     else:
         _ = os.system('clear')
 
@@ -257,16 +266,16 @@ def is_in_options(num):
 
 
 def option():
-    # BANNER TOOLS
     clear()
     stderr.writelines(f"""
-       ________               __      ______                __  
-      / ____/ /_  ____  _____/ /_    /_  __/________ ______/ /__
-     / / __/ __ \/ __ \/ ___/ __/_____/ / / ___/ __ `/ ___/ //_/
-    / /_/ / / / / /_/ (__  ) /_/_____/ / / /  / /_/ / /__/ ,<   
-    \____/_/ /_/\____/____/\__/     /_/ /_/   \__,_/\___/_/|_| 
+    {Gr} _______                _     _   _           _ _
+    {Gr}|__   __|              | |   | | | |         | | |
+    {Gr}   | |_ __ __ _  ___| | __| | | | __ _ _   _| | |_
+    {Gr}   | | '__/ _` |/ __| |/ /| | | |/ _` | | | | | __|
+    {Gr}   | | | | (_| | (__|   < | |_| | (_| | |_| | | |_
+    {Gr}   |_|_|  \\__,_|\\___|_|\\_\\ \\___/ \\__,_|\\__,_|_|\\__|
 
-              {Wh}[ + ]  C O D E   B Y  H U N X  [ + ]
+              {Wh}[ + ]  T R A C K V A U L T  [ + ]
     """)
 
     stderr.writelines(f"\n\n\n{option_text()}")
@@ -278,8 +287,8 @@ def run_banner():
     stderr.writelines(f"""{Wh}
          .-.
        .'   `.          {Wh}--------------------------------
-       :g g   :         {Wh}| {Gr}GHOST - TRACKER - IP ADDRESS {Wh}|
-       : o    `.        {Wh}|       {Gr}@CODE BY HUNXBYTS      {Wh}|
+       :o o   :         {Wh}| {Gr}TRACKVAULT - OSINT TOOLKIT  {Wh}|
+       : o    `.        {Wh}|                               {Wh}|
       :         ``.     {Wh}--------------------------------
      :             `.
     :  :         .   `.
