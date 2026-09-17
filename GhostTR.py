@@ -307,7 +307,7 @@ def main():
     option()
     time.sleep(1)
     try:
-        opt = int(input(f"{Wh}\n [ + ] {Gr}Select Option : {Wh}"))
+        opt = int(input(f"{Wh}\n [ + ] {Gr}Select an option (0-4) : {Wh}"))
         execute_option(opt)
     except ValueError:
         print(f'\n{Wh}[ {Re}! {Wh}] {Re}Please input number')
